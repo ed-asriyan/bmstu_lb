@@ -31,18 +31,18 @@ func logIn(username, password string) (Token, error) {
 		"accept":    {"Continue"},
 	})
 	if err != nil {
-		return "", err
+		return NullToken, err
 	}
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", err
+		return NullToken, err
 	}
 	defer response.Body.Close()
 	bodyStr := string(body)
 
 	if !strings.Contains(bodyStr, "Logout") {
-		return "", errors.New("username\\password is invalid or another device has been already connected")
+		return NullToken, errors.New("username\\password is invalid or another device has been already connected")
 	}
 
 	token := Token(bodyStr[962:978])

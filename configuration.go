@@ -18,6 +18,8 @@ type Configuration struct {
 
 type Token string
 
+const NullToken = Token("")
+
 func loadConfiguration() (Configuration, error) {
 	configFile, err := os.Open(CONFIG_PATH)
 	defer configFile.Close()
@@ -45,7 +47,7 @@ func createEmptyConfigurationFile() error {
 func loadToken() (Token, error) {
 	token, err := ioutil.ReadFile(TOKEN_PATH)
 	if err != nil {
-		return "", err
+		return NullToken, err
 	} else {
 		return Token(token), nil
 	}

@@ -29,7 +29,14 @@ func main() {
 					fmt.Println("Network is reachable.")
 					fmt.Println("You will be automatically reconnected after bmstu_lb timeout.")
 					fmt.Println()
-					fmt.Println("Press enter to exit the program...")
+					fmt.Print("Press enter to ")
+					if token == NullToken {
+						fmt.Print("exit the program")
+					} else {
+						fmt.Print("logout")
+					}
+					fmt.Println("...")
+
 					fmt.Println()
 				}
 				isNetworkReachable = newNetworkStatus
@@ -39,6 +46,7 @@ func main() {
 			}
 
 			fmt.Println("Network is unreachable.")
+			token = NullToken
 
 			fmt.Println("Authorizing in bmstu_lb...")
 			token, err = logIn(configuration.Username, configuration.Password)
@@ -58,8 +66,10 @@ func main() {
 
 	fmt.Scanln()
 	isRunning = false
-	logOut(token)
-	fmt.Println("You have been disconnected.")
+	if token != NullToken {
+		logOut(token)
+		fmt.Println("You have been disconnected.")
+	}
 	deleteToken()
 	os.Exit(0)
 }
