@@ -9,6 +9,8 @@ import (
 const TOKEN_PATH = "/tmp/.bmstu_lb"
 const CONFIG_PATH = "bmstu_lb.json"
 
+const DEFAULT_PERMISSIONS = 0660
+
 type Configuration struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -37,7 +39,7 @@ func createEmptyConfigurationFile() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(CONFIG_PATH, configJson, 777)
+	return ioutil.WriteFile(CONFIG_PATH, configJson, DEFAULT_PERMISSIONS)
 }
 
 func loadToken() (Token, error) {
@@ -50,7 +52,7 @@ func loadToken() (Token, error) {
 }
 
 func saveToken(token Token) error {
-	return ioutil.WriteFile(TOKEN_PATH, []byte(token), 777)
+	return ioutil.WriteFile(TOKEN_PATH, []byte(token), DEFAULT_PERMISSIONS)
 }
 
 func deleteToken() error {
