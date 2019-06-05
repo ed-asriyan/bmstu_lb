@@ -9,17 +9,21 @@ import (
 	"time"
 )
 
-func checkNetwork() bool {
+func checkNetwork() (bool, error) {
+	result := true
+
 	client := http.Client{Timeout: time.Duration(5 * time.Second)}
+	// if user is not authorized in bmstu_lb any request should ne redirected to lbpfs.bmstu.ru:8003
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return errors.New("redirect")
+		result = false
+		return nil
 	}
 	_, err := client.Get("http://bmstu.ru")
 
 	if err != nil {
-		return false
+		return false, err
 	} else {
-		return true
+		return result, nil
 	}
 }
 

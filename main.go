@@ -17,14 +17,27 @@ func main() {
 	token, err := loadToken()
 	if err == nil {
 		fmt.Println("Loaded token:", token)
+		fmt.Println()
 	}
 
 	isRunning := true
 	go func() {
 		isNetworkReachable := false
 		for isRunning {
-			newNetworkStatus := checkNetwork()
+			newNetworkStatus, err := checkNetwork()
+			if err != nil {
+				fmt.Println("Network connection check has failed.")
+				fmt.Println(err)
+				fmt.Println()
+
+				isNetworkReachable = newNetworkStatus
+
+				time.Sleep(2 * time.Second)
+				continue
+			}
+
 			if newNetworkStatus {
+				// if notwork state changed
 				if !isNetworkReachable {
 					fmt.Println("Network is reachable.")
 					fmt.Println("You will be automatically reconnected after bmstu_lb timeout.")
