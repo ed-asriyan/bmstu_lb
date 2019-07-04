@@ -46,7 +46,7 @@ func logIn(username, password string) (Token, error) {
 	bodyStr := string(body)
 
 	if !strings.Contains(bodyStr, "Logout") {
-		return NullToken, errors.New("username\\password is invalid or another device has been already connected")
+		return NullToken, errors.New("username\\password is invalid or another device is already connected")
 	}
 
 	token := Token(bodyStr[962:978])
