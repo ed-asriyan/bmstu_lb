@@ -64,9 +64,9 @@ func main() {
 			fmt.Println("Authorizing in bmstu_lb...")
 			token, err = logIn(configuration.Username, configuration.Password)
 			if err != nil {
-				fmt.Println("Can not authorize:")
-				fmt.Println(err)
+				fmt.Println("Can not authorize:", err)
 				fmt.Println()
+				time.Sleep(10 * time.Second)
 				continue
 			}
 
