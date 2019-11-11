@@ -19,5 +19,5 @@
 
 ## Сборка
 ```bash
-go build -o bmstu_lb -i main.go api.go configuration.go
+go build
 ```
