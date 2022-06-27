@@ -1,78 +1,33 @@
 package main
 
 import (
-	"errors"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
 
-func checkNetwork() (bool, error) {
-	result := true
+func checkNetwork() string {
+	const sampleUrl = "http://222.222.222.222"
+	result := ""
 
 	client := http.Client{Timeout: time.Duration(5 * time.Second)}
-	// if user is not authorized in bmstu_lb any request should ne redirected to lbpfs.bmstu.ru:8003
+	// if user is not authorized in Nandos, any request should be redirected to local host
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		result = false
+		location := req.Response.Header.Get("Location")
+		if !strings.Contains(location, sampleUrl) {
+			result = location
+		}
 		return nil
 	}
-	_, err := client.Get("http://bmstu.ru")
+	client.Get(sampleUrl)
 
-	if err != nil {
-		return false, err
-	} else {
-		return result, nil
-	}
+	return result
 }
 
-func logIn(username, password string) (Token, error) {
-	response, err := http.PostForm("https://lbpfs.bmstu.ru:8003/index.php?zone=bmstu_lb", url.Values{
-		"auth_user": {username},
-		"auth_pass": {password},
-		"redirurl":  {"/"},
-		"accept":    {"Continue"},
-	})
-	if err != nil {
-		return NullToken, err
-	}
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return NullToken, err
-	}
-	defer response.Body.Close()
-	bodyStr := string(body)
-
-	if !strings.Contains(bodyStr, "Logout") {
-		return NullToken, errors.New("username\\password is invalid or another device is already connected")
-	}
-
-	token := Token(bodyStr[962:978])
-	return token, nil
-}
-
-func logOut(token Token) error {
-	response, err := http.PostForm("https://lbpfs.bmstu.ru:8003/", url.Values{
-		"logout_id": {string(token)},
-		"zone":      {"bmstu_lb"},
-		"logOut":    {"Logout"},
-	})
-	if err != nil {
-		return err
-	}
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-	bodyStr := string(body)
-
-	if !strings.Contains(bodyStr, "You have been disconnected.") {
-		return errors.New("can not disconnect using this token: " + string(token))
-	}
-
-	return nil
+func logIn(urlRedirect string) error {
+	client := http.Client{Timeout: time.Duration(5 * time.Second)}
+	req, _ := http.NewRequest("POST", "http://192.168.100.30:8880/guest/s/default/login?t=1656313299343", nil)
+	req.Header.Add("Cookie", "ec=J_DjUvO3mtMv_9oDll3MbRJdp6SSLXrnK715PH5WBfSgNu3uoqN2eVKTklTmQXEdtUNUcGbkRIao3fdiD945UKjD2EsC_iu_OUrxoDL7rWwtUn_si100kodiUyxxYLOobS2sRG4-ZrD6keDl_dowYnLJL-hgg9zqg545FzGR0owu_FBoe9FBXq_svm-XT69Q; unifi-portal-tos_undefined=true; NG_TRANSLATE_LANG_KEY=%22en%22")
+	_, err := client.Do(req)
+	return err
 }

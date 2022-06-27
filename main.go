@@ -2,87 +2,52 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"strconv"
 	"time"
 )
 
+func log(s ...any) {
+	fmt.Print(time.Now().Format("01-02-2006 15:04:05 | "))
+	fmt.Println(s...)
+}
+
 func main() {
-	configuration, err := loadConfiguration()
-	if err != nil || configuration.Username == "" || configuration.Password == "" {
-		createEmptyConfigurationFile()
-		fmt.Println("Please, fill", CONFIG_PATH, "configuration file.")
-		return
-	}
+	log("Starting...")
+	wasNetworkReachable := false
+	var lastReconnect int64 = 0
+	for {
+		redirectUrl := checkNetwork()
+		networkStatus := redirectUrl == ""
 
-	token, err := loadToken()
-	if err == nil {
-		fmt.Println("Loaded token:", token)
-		fmt.Println()
-	}
-
-	isRunning := true
-	go func() {
-		isNetworkReachable := false
-		for isRunning {
-			newNetworkStatus, err := checkNetwork()
-			if err != nil {
-				fmt.Println("Network connection check has failed.")
-				fmt.Println(err)
-				fmt.Println()
-
-				isNetworkReachable = newNetworkStatus
-
-				time.Sleep(2 * time.Second)
-				continue
+		if !networkStatus {
+			if wasNetworkReachable {
+				log("Network has become unreachable after " + strconv.FormatInt((time.Now().UnixMilli()-lastReconnect)/1000, 10) + " seconds.")
 			}
 
-			if newNetworkStatus {
-				// if notwork state changed
-				if !isNetworkReachable {
-					fmt.Println("Network is reachable.")
-					fmt.Println("You will be automatically reconnected after bmstu_lb timeout.")
-					fmt.Println()
-					fmt.Print("Press enter to ")
-					if token == NullToken {
-						fmt.Print("exit the program")
-					} else {
-						fmt.Print("logout")
-					}
-					fmt.Println("...")
-
-					fmt.Println()
-				}
-				isNetworkReachable = newNetworkStatus
-
-				time.Sleep(15 * time.Second)
-				continue
-			}
-
-			fmt.Println("Network is unreachable.")
-			token = NullToken
-
-			fmt.Println("Authorizing in bmstu_lb...")
-			token, err = logIn(configuration.Username, configuration.Password)
+			log("Authorizing in Nandos...")
+			err := logIn(redirectUrl)
 			if err != nil {
-				fmt.Println("Can not authorize:", err)
-				fmt.Println()
+				log("Can not authorize: ", err)
+				log()
 				time.Sleep(10 * time.Second)
-				continue
 			}
 
-			fmt.Println("Done. Your token:", token)
-			saveToken(token)
-			fmt.Println()
+			log()
 			time.Sleep(5 * time.Second)
-		}
-	}()
+		} else {
+			// network state changed
+			if !wasNetworkReachable {
+				log("No Nandos restrictions were detected.")
+				log("You will be automatically reconnected after Nandos timeout.")
+				log()
+				log("Press Ctrl+C to exit the program...")
+				log()
 
-	fmt.Scanln()
-	isRunning = false
-	if token != NullToken {
-		logOut(token)
-		fmt.Println("You have been disconnected.")
+				lastReconnect = time.Now().UnixMilli()
+			}
+
+			time.Sleep(15 * time.Second)
+		}
+		wasNetworkReachable = networkStatus
 	}
-	deleteToken()
-	os.Exit(0)
 }
